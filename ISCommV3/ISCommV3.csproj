@@ -50,7 +50,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ByteArrayBuffer.cs" />
     <Compile Include="EventArgs\ReceivedObjectEventArgs.cs" />
     <Compile Include="ISCommClient.cs" />
     <Compile Include="ISCommServer.cs" />
@@ -64,10 +63,6 @@
     <Compile Include="MessageHandlers\Server\BaseServerHandler.cs" />
     <Compile Include="MessageHandlers\Server\IServerHandler.cs" />
     <Compile Include="MessageHandlers\Server\IServerHandler_2.cs" />
-    <Compile Include="Messages\AnswerMessage.cs" />
-    <Compile Include="Messages\EchoMessage.cs" />
-    <Compile Include="Messages\WaitMessage.cs" />
-    <Compile Include="Messages\WaitOverTimeoutMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Session.cs" />
     <Compile Include="Sessions.cs" />

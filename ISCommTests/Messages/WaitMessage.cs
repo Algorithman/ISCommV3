@@ -21,7 +21,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace ISCommV3.Messages
+namespace ISCommTests.Messages
 {
     #region Usings
 

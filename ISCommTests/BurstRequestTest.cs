@@ -29,9 +29,10 @@ namespace ISCommTests
     using System.Diagnostics;
     using System.Threading;
 
+    using ISCommTests.Messages;
+
     using ISCommV3;
     using ISCommV3.EventArgs;
-    using ISCommV3.Messages;
 
     using NUnit.Framework;
 

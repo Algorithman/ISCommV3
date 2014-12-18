@@ -28,7 +28,6 @@ namespace ISCommV3
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net;
     using System.Net.Sockets;
     using System.Reflection;
 
@@ -45,16 +44,9 @@ namespace ISCommV3
     /// </summary>
     public class ISCommClient : IDisposable
     {
-        #region Static Fields
-
-        /// <summary>
-        /// The publishers.
-        /// </summary>
-        private static readonly Dictionary<Type, MethodInfo> publishers = new Dictionary<Type, MethodInfo>();
-
-        #endregion
-
         #region Fields
+
+        private bool useCompression = false;
 
         /// <summary>
         ///     The bus.
@@ -97,8 +89,10 @@ namespace ISCommV3
         /// <param name="autoSubscribe">
         /// The auto Subscribe.
         /// </param>
-        public ISCommClient(int receiveTimeout = -1, int sendTimeout = 1, bool autoSubscribe = true)
+        /// <param name="useCompression"></param>
+        public ISCommClient(int receiveTimeout = -1, int sendTimeout = 1, bool autoSubscribe = true, bool compression = true)
         {
+            this.useCompression = compression;
             this.receiveTimeout = receiveTimeout;
             this.sendTimeout = sendTimeout;
             this.bus = new TinyMessengerHub();
@@ -181,7 +175,7 @@ namespace ISCommV3
                 try
                 {
                     this.tcpClient.Connect(host, port);
-                    this.stream = new ISCommStream(this.tcpClient);
+                    this.stream = new ISCommStream(this.tcpClient, this.useCompression);
                     this.stream.NetworkStream.WriteTimeout = this.sendTimeout;
                     this.stream.NetworkStream.ReadTimeout = this.receiveTimeout;
                     this.stream.ObjectReceived += this.StreamObjectReceived;
@@ -200,36 +194,6 @@ namespace ISCommV3
                 }
             }
 
-            return false;
-        }
-
-
-        /// <summary>
-        /// The get host ip v 4.
-        /// </summary>
-        /// <param name="ipaddressRange">
-        /// The ipaddress range.
-        /// </param>
-        /// <param name="ipAddress">
-        /// The ip address.
-        /// </param>
-        /// <returns>
-        /// The <see cref="bool"/>.
-        /// </returns>
-        private bool GetHostIPV4(string ipaddressRange, out IPAddress ipAddress)
-        {
-            IPAddress[] list = Dns.GetHostAddresses(ipaddressRange);
-            foreach (IPAddress address in list)
-            {
-                // Lets focus on IPV4 first
-                if (address.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    ipAddress = address;
-                    return true;
-                }
-            }
-
-            ipAddress = IPAddress.Any;
             return false;
         }
 
@@ -337,7 +301,7 @@ namespace ISCommV3
                 foreach (Type type in GetAllTypesImplementingOpenGenericType(typeof(IClientHandler<>)))
                 {
                     PropertyInfo prop = type.GetProperty(
-                        "Instance", 
+                        "Instance",
                         BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy);
                     object instance = prop.GetValue(null, null);
                     var inst = (IClientHandler)instance;

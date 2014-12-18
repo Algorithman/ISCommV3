@@ -21,7 +21,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace ISCommV3.Messages
+namespace ISCommTests.Messages
 {
     #region Usings
 
@@ -32,17 +32,17 @@ namespace ISCommV3.Messages
     #endregion
 
     /// <summary>
-    ///     The answer message.
+    ///     The Echo message.
     /// </summary>
-    public class AnswerMessage : BaseMessage
+    public class EchoMessage : BaseMessage
     {
         #region Public Properties
 
         /// <summary>
-        ///     Gets or sets the Echo.
+        ///     Gets or sets the Echo text.
         /// </summary>
         [MessagePackMember(0)]
-        public string Echo { get; set; }
+        public string EchoText { get; set; }
 
         #endregion
     }

@@ -27,9 +27,10 @@ namespace ISCommTests.MessageHandlers.Server
 
     using System.Threading;
 
+    using ISCommTests.Messages;
+
     using ISCommV3;
     using ISCommV3.MessageHandlers.Server;
-    using ISCommV3.Messages;
 
     using TinyMessenger;
 

@@ -44,7 +44,7 @@ namespace ISCommV3.MessageBase
         /// <summary>
         ///     The serializers.
         /// </summary>
-        internal static Dictionary<Type, IMessagePackSingleObjectSerializer> serializers =
+        internal static readonly Dictionary<Type, IMessagePackSingleObjectSerializer> Serializers =
             new Dictionary<Type, IMessagePackSingleObjectSerializer>();
 
         #endregion
@@ -57,11 +57,11 @@ namespace ISCommV3.MessageBase
         public BaseMessage()
         {
             Type dataType = this.GetType();
-            lock (serializers)
+            lock (Serializers)
             {
-                if (!serializers.ContainsKey(dataType))
+                if (!Serializers.ContainsKey(dataType))
                 {
-                    serializers.Add(dataType, MessagePackSerializer.Get(dataType));
+                    Serializers.Add(dataType, MessagePackSerializer.Get(dataType));
                 }
             }
         }
@@ -80,16 +80,39 @@ namespace ISCommV3.MessageBase
         #region Public Methods and Operators
 
         /// <summary>
+        /// The get data.
         /// </summary>
         /// <returns>
-        ///     The <see cref="byte[]" />.
+        /// The <see cref="byte[]"/>.
         /// </returns>
         public byte[] GetData()
         {
             Type dataType = this.GetType();
-            return serializers[dataType].PackSingleObject(this);
+            return Serializers[dataType].PackSingleObject(this);
         }
 
         #endregion
+
+        /// <summary>
+        /// The get serializer.
+        /// </summary>
+        /// <param name="type">
+        /// The type.
+        /// </param>
+        /// <returns>
+        /// The <see cref="IMessagePackSingleObjectSerializer"/>.
+        /// </returns>
+        internal static IMessagePackSingleObjectSerializer GetSerializer(Type type)
+        {
+            lock (Serializers)
+            {
+                if (!Serializers.ContainsKey(type))
+                {
+                    Serializers.Add(type, MessagePackSerializer.Get(type));
+                }
+            }
+
+            return Serializers[type];
+        }
     }
 }

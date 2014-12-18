@@ -108,8 +108,7 @@ namespace ISCommV3.MessageBase
         /// </returns>
         public static byte[] Pack(BaseMessage mb)
         {
-            var dm = new DynamicMessage();
-            dm.DataObject = mb;
+            var dm = new DynamicMessage { DataObject = mb };
             if (serializer == null)
             {
                 serializer = MessagePackSerializer.Get<DynamicMessage>();
@@ -186,7 +185,7 @@ namespace ISCommV3.MessageBase
                 }
             }
 
-            IMessagePackSingleObjectSerializer ser = BaseMessage.serializers[type];
+            IMessagePackSingleObjectSerializer ser = BaseMessage.GetSerializer(type);
 
             // Unpack the message's data object
             this.dataObject = (BaseMessage)ser.UnpackSingleObject(temp);

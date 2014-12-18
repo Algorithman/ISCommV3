@@ -21,7 +21,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace ISCommV3.Messages
+namespace ISCommTests.Messages
 {
     #region Usings
 
@@ -32,17 +32,29 @@ namespace ISCommV3.Messages
     #endregion
 
     /// <summary>
-    ///     The Echo message.
+    ///     The wait over timeout message.
     /// </summary>
-    public class EchoMessage : BaseMessage
+    public class WaitOverTimeoutMessage : BaseMessage
     {
+        #region Constructors and Destructors
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="WaitOverTimeoutMessage" /> class.
+        /// </summary>
+        public WaitOverTimeoutMessage()
+        {
+            this.dummy = 55;
+        }
+
+        #endregion
+
         #region Public Properties
 
         /// <summary>
-        ///     Gets or sets the Echo text.
+        ///     Gets or sets the dummy.
         /// </summary>
         [MessagePackMember(0)]
-        public string EchoText { get; set; }
+        public int dummy { get; set; }
 
         #endregion
     }

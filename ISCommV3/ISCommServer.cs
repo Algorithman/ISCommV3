@@ -58,7 +58,7 @@ namespace ISCommV3
         /// <summary>
         ///     The listener.
         /// </summary>
-        public TcpListener listener;
+        private TcpListener listener;
 
         #endregion
 
@@ -70,10 +70,12 @@ namespace ISCommV3
         /// <param name="autoSubscribe">
         /// The auto Subscribe.
         /// </param>
-        public ISCommServer(bool autoSubscribe = true)
+        /// <param name="compression">
+        /// </param>
+        public ISCommServer(bool autoSubscribe = true, bool compression = true)
         {
             this.bus = new TinyMessengerHub();
-            this.sessions = new Sessions(this.bus);
+            this.sessions = new Sessions(this.bus, compression);
             this.Subscribe(autoSubscribe);
         }
 
@@ -116,6 +118,9 @@ namespace ISCommV3
         /// <param name="port">
         /// The port the Server listens on.
         /// </param>
+        /// <param name="compression">
+        /// The use Compression.
+        /// </param>
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
@@ -123,19 +128,18 @@ namespace ISCommV3
         {
             try
             {
-
-                IPAddress ipAddress = IPAddress.Any;
-                if (!IPAddress.TryParse(ipaddressRange, out ipAddress))
+                IPAddress address;
+                if (!IPAddress.TryParse(ipaddressRange, out address))
                 {
                     // No valid IP Address given, lets check hostnames over dns
-                    if (!GetHostIPV4(ipaddressRange, out ipAddress))
+                    if (!this.GetHostIPV4(ipaddressRange, out address))
                     {
                         // Also no valid hostname (or cannot be resolved)
                         throw new ArgumentException("ipaddressRange no valid IP Address or hostname");
                     }
                 }
 
-                this.listener = new TcpListener(ipAddress, port);
+                this.listener = new TcpListener(address, port);
                 this.listener.Start();
                 this.sessions.DisposeAllSessions();
                 this.AcceptClients();
@@ -146,35 +150,6 @@ namespace ISCommV3
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// The get host ip v 4.
-        /// </summary>
-        /// <param name="ipaddressRange">
-        /// The ipaddress range.
-        /// </param>
-        /// <param name="ipAddress">
-        /// The ip address.
-        /// </param>
-        /// <returns>
-        /// The <see cref="bool"/>.
-        /// </returns>
-        private bool GetHostIPV4(string ipaddressRange, out IPAddress ipAddress)
-        {
-            IPAddress[] list = Dns.GetHostAddresses(ipaddressRange);
-            foreach (IPAddress address in list)
-            {
-                // Lets focus on IPV4 first
-                if (address.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    ipAddress = address;
-                    return true;
-                }
-            }
-
-            ipAddress = IPAddress.Any;
-            return false;
         }
 
         /// <summary>
@@ -230,6 +205,35 @@ namespace ISCommV3
                     }
                 }, 
                 null);
+        }
+
+        /// <summary>
+        /// The get host ip v 4.
+        /// </summary>
+        /// <param name="ipaddressRange">
+        /// The ipaddress range.
+        /// </param>
+        /// <param name="ipAddress">
+        /// The ip address.
+        /// </param>
+        /// <returns>
+        /// The <see cref="bool"/>.
+        /// </returns>
+        private bool GetHostIPV4(string ipaddressRange, out IPAddress ipAddress)
+        {
+            IPAddress[] list = Dns.GetHostAddresses(ipaddressRange);
+            foreach (IPAddress address in list)
+            {
+                // Lets focus on IPV4 first
+                if (address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    ipAddress = address;
+                    return true;
+                }
+            }
+
+            ipAddress = IPAddress.Any;
+            return false;
         }
 
         /// <summary>

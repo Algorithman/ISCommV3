@@ -67,6 +67,10 @@
     <Compile Include="MessageHandlers\Server\EchoMessageHandler.cs" />
     <Compile Include="MessageHandlers\Server\WaitMessageHandler.cs" />
     <Compile Include="MessageHandlers\Server\WaitOverTimeoutMessageHandler.cs" />
+    <Compile Include="Messages\AnswerMessage.cs" />
+    <Compile Include="Messages\EchoMessage.cs" />
+    <Compile Include="Messages\WaitMessage.cs" />
+    <Compile Include="Messages\WaitOverTimeoutMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitTest1.cs" />
   </ItemGroup>

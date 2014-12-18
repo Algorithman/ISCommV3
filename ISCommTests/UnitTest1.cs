@@ -25,16 +25,14 @@ namespace ISCommTests
 {
     #region Usings
 
-    using System;
-    using System.Net;
-    using System.Net.NetworkInformation;
     using System.Threading;
+
+    using ISCommTests.Messages;
 
     using ISCommV3;
     using ISCommV3.EventArgs;
     using ISCommV3.MessageBase;
     using ISCommV3.MessageHandlers.Server;
-    using ISCommV3.Messages;
 
     using MsgPack.Serialization;
 
@@ -53,7 +51,7 @@ namespace ISCommTests
         #region Fields
 
         /// <summary>
-        ///     The mrep.
+        ///     The manualResetEvent.
         /// </summary>
         private readonly ManualResetEvent mrep = new ManualResetEvent(false);
 
@@ -103,8 +101,6 @@ namespace ISCommTests
 
             server.Start();
 
-            BaseMessage dm = new EchoMessage();
-
             bool connected = client.Connect("127.0.0.1", server.Port);
             if (!connected)
             {
@@ -126,28 +122,6 @@ namespace ISCommTests
             Assert.IsNotNull(this.reply);
             Assert.IsAssignableFrom<AnswerMessage>(this.reply);
             Assert.AreEqual(((AnswerMessage)this.reply).Echo, em.EchoText);
-        }
-
-        /// <summary>
-        /// The show i ps.
-        /// </summary>
-        [Test]
-        public void ShowIPs()
-        {
-            var server = new ISCommServer();
-            server.Start();
-            IPEndPoint ipep = server.listener.Server.LocalEndPoint as IPEndPoint;
-            NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
-            foreach (NetworkInterface adapter in adapters)
-            {
-                IPInterfaceProperties properties = adapter.GetIPProperties();
-                foreach (IPAddressInformation unicast in properties.UnicastAddresses)
-                {
-                    if (ipep.AddressFamily == unicast.Address.AddressFamily) Console.WriteLine("Listening: {0}:{1}", unicast.Address, ipep.Port);
-                }
-            }
-
-            server.Stop();
         }
 
         #endregion

@@ -40,6 +40,11 @@ namespace ISCommV3
         #region Fields
 
         /// <summary>
+        /// The use compression.
+        /// </summary>
+        private readonly bool useCompression;
+
+        /// <summary>
         ///     The bus.
         /// </summary>
         private readonly ITinyMessengerHub bus;
@@ -64,9 +69,10 @@ namespace ISCommV3
         /// <param name="bus">
         /// The bus.
         /// </param>
-        public Sessions(ITinyMessengerHub bus)
+        public Sessions(ITinyMessengerHub bus, bool useCompression = true)
         {
             this.bus = bus;
+            this.useCompression = useCompression;
         }
 
         #endregion
@@ -112,7 +118,7 @@ namespace ISCommV3
         /// </returns>
         public Session NewSession(ISCommServer server, TcpClient client)
         {
-            var session = new Session(this, this.bus, client);
+            var session = new Session(this, this.bus, client, this.useCompression);
 
             lock (this.singularity)
             {

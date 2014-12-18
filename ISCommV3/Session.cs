@@ -82,13 +82,16 @@ namespace ISCommV3
         /// <param name="bus">
         /// The bus.
         /// </param>
-        /// <param name="tcpClient">
-        /// The tcp client.
+        /// <param name="client">
+        /// The client.
         /// </param>
-        public Session(Sessions sessions, ITinyMessengerHub bus, TcpClient tcpClient)
+        /// <param name="useCompression">
+        /// The use compression.
+        /// </param>
+        public Session(Sessions sessions, ITinyMessengerHub bus, TcpClient client, bool useCompression = true)
         {
-            this.client = tcpClient;
-            this.stream = new ISCommStream(tcpClient);
+            this.client = client;
+            this.stream = new ISCommStream(client, useCompression);
             this.stream.ObjectReceived += this.StreamObjectReceived;
             this.bus = bus;
             this.sessions = sessions;

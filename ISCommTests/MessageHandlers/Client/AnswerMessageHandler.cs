@@ -27,8 +27,9 @@ namespace ISCommTests.MessageHandlers.Client
 
     using System;
 
+    using ISCommTests.Messages;
+
     using ISCommV3.MessageHandlers.Client;
-    using ISCommV3.Messages;
 
     using TinyMessenger;
 

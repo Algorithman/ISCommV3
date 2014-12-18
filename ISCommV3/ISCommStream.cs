@@ -44,29 +44,24 @@ namespace ISCommV3
         #region Fields
 
         /// <summary>
-        ///     The stream.
-        /// </summary>
-        protected readonly NetworkStream networkStream;
-
-        /// <summary>
         ///     The client.
         /// </summary>
         private readonly TcpClient client;
 
         /// <summary>
+        ///     The stream.
+        /// </summary>
+        private readonly NetworkStream networkStream;
+
+        /// <summary>
+        ///     The use compression.
+        /// </summary>
+        private readonly bool useCompression;
+
+        /// <summary>
         ///     The receiving.
         /// </summary>
         private bool receiving;
-
-        /// <summary>
-        ///     The stop receive.
-        /// </summary>
-        private bool stopReceive;
-
-        /// <summary>
-        /// The use compression.
-        /// </summary>
-        private readonly bool useCompression = false;
 
         #endregion
 
@@ -102,17 +97,6 @@ namespace ISCommV3
         #region Public Properties
 
         /// <summary>
-        ///     Gets the buffer size.
-        /// </summary>
-        public int BufferSize
-        {
-            get
-            {
-                return this.buffer.GetBufferSize();
-            }
-        }
-
-        /// <summary>
         ///     Gets the network stream.
         /// </summary>
         public NetworkStream NetworkStream
@@ -136,26 +120,6 @@ namespace ISCommV3
 
         #endregion
 
-        #region Properties
-
-        /// <summary>
-        ///     Gets a value indicating whether buffer has data.
-        /// </summary>
-        protected bool BufferHasData
-        {
-            get
-            {
-                return this.BufferSize > 0;
-            }
-        }
-
-        /// <summary>
-        ///     Gets or sets the buffer.
-        /// </summary>
-        private ByteArrayBuffer buffer { get; set; }
-
-        #endregion
-
         #region Public Methods and Operators
 
         /// <summary>
@@ -164,7 +128,6 @@ namespace ISCommV3
         public void Dispose()
         {
             this.receiving = false;
-            Thread.Sleep(50);
             this.networkStream.Close();
         }
 
@@ -226,8 +189,8 @@ namespace ISCommV3
             if (lengthBytes != null)
             {
                 int length = BitConverter.ToInt32(lengthBytes, 0);
-                var buffer = new byte[length];
-                this.networkStream.BeginRead(buffer, 0, length, this.ReceivedObject, buffer);
+                var tempBuffer = new byte[length];
+                this.networkStream.BeginRead(tempBuffer, 0, length, this.ReceiveObjectCallBack, tempBuffer);
             }
         }
 
@@ -237,18 +200,23 @@ namespace ISCommV3
         /// <param name="result">
         /// The result.
         /// </param>
-        private void ReceivedObject(IAsyncResult result)
+        private void ReceiveObjectCallBack(IAsyncResult result)
         {
             this.networkStream.EndRead(result);
-            var buffer = result.AsyncState as byte[];
-            if (buffer != null)
+            var tempBuffer = result.AsyncState as byte[];
+            if (tempBuffer != null)
             {
-                if (useCompression)
+                BaseMessage bm;
+                if (this.useCompression)
                 {
-                    buffer = ZlibStream.UncompressBuffer(buffer);
+                    byte[] uncompressed = ZlibStream.UncompressBuffer(tempBuffer);
+                    bm = DynamicMessage.Unpack(uncompressed);
+                }
+                else
+                {
+                    bm = DynamicMessage.Unpack(tempBuffer);
                 }
 
-                BaseMessage bm = DynamicMessage.Unpack(buffer);
                 EventHandler<ReceivedObjectEventArgs> handler = this.ObjectReceived;
                 if (handler != null)
                 {
@@ -265,7 +233,7 @@ namespace ISCommV3
         /// </param>
         private void Send(byte[] data)
         {
-            if (!useCompression)
+            if (!this.useCompression)
             {
                 // Write length prefix, then the data
                 this.SendLength(data.Length);

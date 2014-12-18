@@ -28,10 +28,11 @@ namespace ISCommTests
     using System;
     using System.Threading;
 
+    using ISCommTests.Messages;
+
     using ISCommV3;
     using ISCommV3.EventArgs;
     using ISCommV3.MessageBase;
-    using ISCommV3.Messages;
 
     using NUnit.Framework;
 
@@ -46,9 +47,9 @@ namespace ISCommTests
         #region Static Fields
 
         /// <summary>
-        ///     The mrep.
+        ///     The manual reset event.
         /// </summary>
-        public static ManualResetEvent mrep = new ManualResetEvent(false);
+        private static readonly ManualResetEvent ManualResetEvent = new ManualResetEvent(false);
 
         #endregion
 
@@ -57,7 +58,7 @@ namespace ISCommTests
         /// <summary>
         ///     The reply.
         /// </summary>
-        public BaseMessage reply;
+        private BaseMessage reply;
 
         #endregion
 
@@ -82,20 +83,48 @@ namespace ISCommTests
 
             Assert.True(connected);
 
-            client.ObjectReceived += this.client_ObjectReceived;
+            client.ObjectReceived += this.ClientObjectReceived;
 
-            var em = new EchoMessage();
-            em.EchoText = "Hallo";
+            var em = new EchoMessage { EchoText = "Hallo" };
 
-            mrep.Reset();
+            ManualResetEvent.Reset();
 
             client.Send(em);
-            mrep.WaitOne();
+            ManualResetEvent.WaitOne();
             server.Stop();
             Assert.IsNotNull(this.reply);
             Assert.IsInstanceOf<AnswerMessage>(this.reply);
         }
 
+
+        [Test]
+        public void UncompressedTest()
+        {
+            var server = new ISCommServer(true, false);
+            var client = new ISCommClient(-1, -1, true, false);
+
+            server.Start("localhost", 4545);
+
+            bool connected = client.Connect("localhost", server.Port);
+            if (!connected)
+            {
+                server.Stop();
+            }
+
+            Assert.True(connected);
+
+            client.ObjectReceived += this.ClientObjectReceived;
+
+            var em = new EchoMessage { EchoText = "Hallo" };
+
+            ManualResetEvent.Reset();
+
+            client.Send(em);
+            ManualResetEvent.WaitOne();
+            server.Stop();
+            Assert.IsNotNull(this.reply);
+            Assert.IsInstanceOf<AnswerMessage>(this.reply);
+        }
         #endregion
 
         #region Methods
@@ -109,11 +138,11 @@ namespace ISCommTests
         /// <param name="e">
         /// The e.
         /// </param>
-        private void client_ObjectReceived(object sender, ReceivedObjectEventArgs e)
+        private void ClientObjectReceived(object sender, ReceivedObjectEventArgs e)
         {
             Console.WriteLine("Data received also through event handler");
             this.reply = e.MessageObject;
-            mrep.Set();
+            ManualResetEvent.Set();
         }
 
         #endregion
