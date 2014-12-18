@@ -72,9 +72,16 @@ namespace ISCommTests
             var server = new ISCommServer();
             var client = new ISCommClient(-1, -1, false);
 
-            server.Start(4545);
+            server.Start("localhost", 4545);
 
-            client.Connect("localhost", 4545);
+            bool connected = client.Connect("localhost", server.Port);
+            if (!connected)
+            {
+                server.Stop();
+            }
+
+            Assert.True(connected);
+
             client.ObjectReceived += this.client_ObjectReceived;
 
             var em = new EchoMessage();
@@ -84,7 +91,7 @@ namespace ISCommTests
 
             client.Send(em);
             mrep.WaitOne();
-
+            server.Stop();
             Assert.IsNotNull(this.reply);
             Assert.IsInstanceOf<AnswerMessage>(this.reply);
         }

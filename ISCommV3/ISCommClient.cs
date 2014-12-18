@@ -28,6 +28,7 @@ namespace ISCommV3
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Net.Sockets;
     using System.Reflection;
 
@@ -199,6 +200,36 @@ namespace ISCommV3
                 }
             }
 
+            return false;
+        }
+
+
+        /// <summary>
+        /// The get host ip v 4.
+        /// </summary>
+        /// <param name="ipaddressRange">
+        /// The ipaddress range.
+        /// </param>
+        /// <param name="ipAddress">
+        /// The ip address.
+        /// </param>
+        /// <returns>
+        /// The <see cref="bool"/>.
+        /// </returns>
+        private bool GetHostIPV4(string ipaddressRange, out IPAddress ipAddress)
+        {
+            IPAddress[] list = Dns.GetHostAddresses(ipaddressRange);
+            foreach (IPAddress address in list)
+            {
+                // Lets focus on IPV4 first
+                if (address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    ipAddress = address;
+                    return true;
+                }
+            }
+
+            ipAddress = IPAddress.Any;
             return false;
         }
 

@@ -26,6 +26,7 @@ namespace ISCommTests
     #region Usings
 
     using System;
+    using System.Diagnostics;
     using System.Threading;
 
     using ISCommV3;
@@ -97,7 +98,7 @@ namespace ISCommTests
         public void BurstTestMethodAsync()
         {
             this.server = new ISCommServer();
-            this.server.Start(3444);
+            this.server.Start("localhost", 3444);
 
             ThreadPool.SetMinThreads(NumThreads + 20, NumThreads + 20);
             Console.WriteLine("Burst test started");
@@ -137,10 +138,16 @@ namespace ISCommTests
         private void OneThreadExecution()
         {
             var client = new ISCommClient();
-            client.ObjectReceived += this.client_ObjectReceived;
+            client.ObjectReceived += this.ClientObjectReceived;
             this.countdown.Signal();
             this.mre.WaitOne();
-            client.Connect("localhost", this.server.Port);
+            bool connected = client.Connect("localhost", server.Port);
+            if (!connected)
+            {
+                this.countdown.Signal();
+            }
+
+            Assert.True(connected);
 
             try
             {
@@ -148,6 +155,7 @@ namespace ISCommTests
             }
             catch (Exception exception)
             {
+                Debug.WriteLine(exception.Message + "\r\n" + exception.StackTrace);
             }
 
             this.countdown.Signal();
@@ -162,7 +170,7 @@ namespace ISCommTests
         /// <param name="e">
         /// The e.
         /// </param>
-        private void client_ObjectReceived(object sender, ReceivedObjectEventArgs e)
+        private void ClientObjectReceived(object sender, ReceivedObjectEventArgs e)
         {
             this.countdown2.Signal();
         }

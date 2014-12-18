@@ -25,6 +25,9 @@ namespace ISCommTests
 {
     #region Usings
 
+    using System;
+    using System.Net;
+    using System.Net.NetworkInformation;
     using System.Threading;
 
     using ISCommV3;
@@ -71,14 +74,21 @@ namespace ISCommTests
         {
             var server = new ISCommServer();
             var client = new ISCommClient();
-            server.Start(4343);
+            server.Start();
             this.mrep.Reset();
             client.ObjectReceived += this.client_ObjectReceived;
-            client.Connect("localhost", server.Port);
+            bool connected = client.Connect("127.0.0.1", server.Port);
+            if (!connected)
+            {
+                server.Stop();
+            }
+
+            Assert.True(connected);
 
             client.Send(new DerivedTest());
 
             this.mrep.WaitOne();
+            server.Stop();
             Assert.IsTrue((this.reply is AnswerMessage) && (((AnswerMessage)this.reply).Echo == "Derived"));
         }
 
@@ -91,11 +101,17 @@ namespace ISCommTests
             var server = new ISCommServer();
             var client = new ISCommClient();
 
-            server.Start(4545);
+            server.Start();
 
             BaseMessage dm = new EchoMessage();
 
-            client.Connect("localhost", 4545);
+            bool connected = client.Connect("127.0.0.1", server.Port);
+            if (!connected)
+            {
+                server.Stop();
+            }
+
+            Assert.True(connected);
 
             var em = new EchoMessage();
             em.EchoText = "Hallo";
@@ -105,10 +121,32 @@ namespace ISCommTests
             client.Send(em);
 
             this.mrep.WaitOne();
+            server.Stop();
 
             Assert.IsNotNull(this.reply);
             Assert.IsAssignableFrom<AnswerMessage>(this.reply);
             Assert.AreEqual(((AnswerMessage)this.reply).Echo, em.EchoText);
+        }
+
+        /// <summary>
+        /// The show i ps.
+        /// </summary>
+        [Test]
+        public void ShowIPs()
+        {
+            var server = new ISCommServer();
+            server.Start();
+            IPEndPoint ipep = server.listener.Server.LocalEndPoint as IPEndPoint;
+            NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
+            foreach (NetworkInterface adapter in adapters)
+            {
+                IPInterfaceProperties properties = adapter.GetIPProperties();
+                foreach (IPAddressInformation unicast in properties.UnicastAddresses)
+                {
+                    if (ipep.AddressFamily == unicast.Address.AddressFamily) Console.WriteLine("Listening: {0}:{1}", unicast.Address, ipep.Port);
+                }
+            }
+
             server.Stop();
         }
 

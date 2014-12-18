@@ -58,7 +58,7 @@ namespace ISCommV3
         /// <summary>
         ///     The listener.
         /// </summary>
-        private TcpListener listener;
+        public TcpListener listener;
 
         #endregion
 
@@ -108,19 +108,34 @@ namespace ISCommV3
         #region Public Methods and Operators
 
         /// <summary>
-        /// The start.
+        /// The start method of the Server.
         /// </summary>
+        /// <param name="ipaddressRange">
+        /// The IP address range the Server listens on.
+        /// </param>
         /// <param name="port">
-        /// The port.
+        /// The port the Server listens on.
         /// </param>
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
-        public bool Start(int port)
+        public bool Start(string ipaddressRange = "0.0.0.0", int port = 6670)
         {
             try
             {
-                this.listener = new TcpListener(IPAddress.Any, port);
+
+                IPAddress ipAddress = IPAddress.Any;
+                if (!IPAddress.TryParse(ipaddressRange, out ipAddress))
+                {
+                    // No valid IP Address given, lets check hostnames over dns
+                    if (!GetHostIPV4(ipaddressRange, out ipAddress))
+                    {
+                        // Also no valid hostname (or cannot be resolved)
+                        throw new ArgumentException("ipaddressRange no valid IP Address or hostname");
+                    }
+                }
+
+                this.listener = new TcpListener(ipAddress, port);
                 this.listener.Start();
                 this.sessions.DisposeAllSessions();
                 this.AcceptClients();
@@ -131,6 +146,35 @@ namespace ISCommV3
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// The get host ip v 4.
+        /// </summary>
+        /// <param name="ipaddressRange">
+        /// The ipaddress range.
+        /// </param>
+        /// <param name="ipAddress">
+        /// The ip address.
+        /// </param>
+        /// <returns>
+        /// The <see cref="bool"/>.
+        /// </returns>
+        private bool GetHostIPV4(string ipaddressRange, out IPAddress ipAddress)
+        {
+            IPAddress[] list = Dns.GetHostAddresses(ipaddressRange);
+            foreach (IPAddress address in list)
+            {
+                // Lets focus on IPV4 first
+                if (address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    ipAddress = address;
+                    return true;
+                }
+            }
+
+            ipAddress = IPAddress.Any;
+            return false;
         }
 
         /// <summary>
@@ -174,17 +218,17 @@ namespace ISCommV3
         {
             this.listener.BeginAcceptTcpClient(
                 ar =>
+                {
+                    try
                     {
-                        try
-                        {
-                            TcpClient client = this.listener.EndAcceptTcpClient(ar);
-                            this.AcceptClients();
-                            this.sessions.NewSession(this, client);
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                        }
-                    }, 
+                        TcpClient client = this.listener.EndAcceptTcpClient(ar);
+                        this.AcceptClients();
+                        this.sessions.NewSession(this, client);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
+                }, 
                 null);
         }
 
