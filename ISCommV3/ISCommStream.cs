@@ -29,6 +29,8 @@ namespace ISCommV3
     using System.Net.Sockets;
     using System.Threading;
 
+    using Ionic.Zlib;
+
     using ISCommV3.EventArgs;
     using ISCommV3.MessageBase;
 
@@ -44,7 +46,7 @@ namespace ISCommV3
         /// <summary>
         ///     The stream.
         /// </summary>
-        protected readonly NetworkStream stream;
+        protected readonly NetworkStream networkStream;
 
         /// <summary>
         ///     The client.
@@ -61,6 +63,11 @@ namespace ISCommV3
         /// </summary>
         private bool stopReceive;
 
+        /// <summary>
+        /// The use compression.
+        /// </summary>
+        private readonly bool useCompression = false;
+
         #endregion
 
         #region Constructors and Destructors
@@ -71,10 +78,14 @@ namespace ISCommV3
         /// <param name="client">
         /// The client.
         /// </param>
-        public ISCommStream(TcpClient client)
+        /// <param name="useZlib">
+        /// The use Zlib.
+        /// </param>
+        public ISCommStream(TcpClient client, bool useZlib = true)
         {
             this.client = client;
-            this.stream = client.GetStream();
+            this.networkStream = client.GetStream();
+            this.useCompression = useZlib;
         }
 
         #endregion
@@ -108,7 +119,7 @@ namespace ISCommV3
         {
             get
             {
-                return this.stream;
+                return this.networkStream;
             }
         }
 
@@ -154,7 +165,7 @@ namespace ISCommV3
         {
             this.receiving = false;
             Thread.Sleep(50);
-            this.stream.Close();
+            this.networkStream.Close();
         }
 
         /// <summary>
@@ -164,7 +175,7 @@ namespace ISCommV3
         {
             var lengthBytes = new byte[4];
 
-            this.stream.BeginRead(lengthBytes, 0, 4, this.ReceiveObject, lengthBytes);
+            this.networkStream.BeginRead(lengthBytes, 0, 4, this.ReceiveObject, lengthBytes);
         }
 
         /// <summary>
@@ -203,30 +214,6 @@ namespace ISCommV3
         }
 
         /// <summary>
-        /// The receive message.
-        /// </summary>
-        /// <param name="length">
-        /// The length.
-        /// </param>
-        /// <returns>
-        /// The <see cref="byte[]"/>.
-        /// </returns>
-        private byte[] ReceiveMessage(int length)
-        {
-            var bytes = new byte[length];
-            int currentIndex = 0;
-            int bytesRead = -1;
-
-            while (bytesRead != 0 && currentIndex < bytes.Length)
-            {
-                bytesRead = this.stream.Read(bytes, currentIndex, bytes.Length - currentIndex);
-                currentIndex += bytesRead;
-            }
-
-            return bytes;
-        }
-
-        /// <summary>
         /// The receive object.
         /// </summary>
         /// <param name="result">
@@ -234,13 +221,13 @@ namespace ISCommV3
         /// </param>
         private void ReceiveObject(IAsyncResult result)
         {
-            this.stream.EndRead(result);
+            this.networkStream.EndRead(result);
             var lengthBytes = result.AsyncState as byte[];
             if (lengthBytes != null)
             {
                 int length = BitConverter.ToInt32(lengthBytes, 0);
                 var buffer = new byte[length];
-                this.stream.BeginRead(buffer, 0, length, this.ReceivedObject, buffer);
+                this.networkStream.BeginRead(buffer, 0, length, this.ReceivedObject, buffer);
             }
         }
 
@@ -252,10 +239,15 @@ namespace ISCommV3
         /// </param>
         private void ReceivedObject(IAsyncResult result)
         {
-            this.stream.EndRead(result);
+            this.networkStream.EndRead(result);
             var buffer = result.AsyncState as byte[];
             if (buffer != null)
             {
+                if (useCompression)
+                {
+                    buffer = ZlibStream.UncompressBuffer(buffer);
+                }
+
                 BaseMessage bm = DynamicMessage.Unpack(buffer);
                 EventHandler<ReceivedObjectEventArgs> handler = this.ObjectReceived;
                 if (handler != null)
@@ -273,10 +265,19 @@ namespace ISCommV3
         /// </param>
         private void Send(byte[] data)
         {
-            // Write length prefix, then the data
-            this.SendLength(data.Length);
+            if (!useCompression)
+            {
+                // Write length prefix, then the data
+                this.SendLength(data.Length);
 
-            this.stream.Write(data, 0, data.Length);
+                this.networkStream.Write(data, 0, data.Length);
+            }
+            else
+            {
+                byte[] compressed = ZlibStream.CompressBuffer(data);
+                this.SendLength(compressed.Length);
+                this.networkStream.Write(compressed, 0, compressed.Length);
+            }
         }
 
         /// <summary>
@@ -287,7 +288,7 @@ namespace ISCommV3
         /// </param>
         private void SendLength(int length)
         {
-            this.stream.Write(BitConverter.GetBytes(length), 0, 4);
+            this.networkStream.Write(BitConverter.GetBytes(length), 0, 4);
         }
 
         #endregion
