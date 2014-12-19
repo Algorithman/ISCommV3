@@ -49,7 +49,7 @@ namespace ISCommTests
         /// <summary>
         ///     The num threads.
         /// </summary>
-        private const int NumThreads = 100;
+        private const int NumThreads = 200;
 
         #endregion
 
@@ -100,7 +100,7 @@ namespace ISCommTests
         {
             this.server = new ISCommServer();
             this.server.Start("localhost", 3444);
-
+            int maxThreadsRunning = 0;
             ThreadPool.SetMinThreads(NumThreads + 20, NumThreads + 20);
             Console.WriteLine("Burst test started");
             this.mre.Reset();
@@ -110,22 +110,44 @@ namespace ISCommTests
             {
                 new Thread(this.OneThreadExecution) { Name = "Thread " + i }.Start();
             }
+            while (this.countdown.CurrentCount > 0)
+            {
+                maxThreadsRunning = maxThreadsRunning < Process.GetCurrentProcess().Threads.Count
+                    ? Process.GetCurrentProcess().Threads.Count
+                    : maxThreadsRunning;
+                Thread.Sleep(5);
+            }
 
             this.countdown.Wait();
             DateTime dateTime = DateTime.Now;
             this.countdown = new CountdownEvent(NumThreads);
             this.mre.Set();
+            while (this.countdown.CurrentCount > 0)
+            {
+                maxThreadsRunning = maxThreadsRunning < Process.GetCurrentProcess().Threads.Count
+                    ? Process.GetCurrentProcess().Threads.Count
+                    : maxThreadsRunning;
+                Thread.Sleep(5);
+            }
             this.countdown.Wait();
             DateTime dt2 = DateTime.Now;
             Console.WriteLine("Send time: {0}", dt2 - dateTime);
+            while (this.countdown2.CurrentCount > 0)
+            {
+                maxThreadsRunning = maxThreadsRunning < Process.GetCurrentProcess().Threads.Count
+                    ? Process.GetCurrentProcess().Threads.Count
+                    : maxThreadsRunning;
+                Thread.Sleep(5);
+            }
             this.countdown2.Wait();
             TimeSpan timeSpan = DateTime.Now - dateTime;
             Console.WriteLine("Async Test finished ({0} Messages sent and received)", NumThreads);
             Console.WriteLine("Executed at {0}.{1:0}s.", timeSpan.Seconds, timeSpan.Milliseconds / 100);
             Console.WriteLine("Countdown 1: {0}", this.countdown.CurrentCount);
             Console.WriteLine("Countdown 2: {0}", this.countdown2.CurrentCount);
+            Console.WriteLine("Max Threads running: " + maxThreadsRunning);
 
-            Assert.IsTrue(timeSpan.Seconds < 10);
+            Assert.IsTrue(timeSpan.Seconds < 4 + NumThreads / 100);
             this.server.Stop();
         }
 

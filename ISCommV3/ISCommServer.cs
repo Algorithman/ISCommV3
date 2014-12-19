@@ -203,7 +203,7 @@ namespace ISCommV3
                     catch (ObjectDisposedException)
                     {
                     }
-                }, 
+                },
                 null);
         }
 
@@ -249,16 +249,28 @@ namespace ISCommV3
                 foreach (Type type in GetAllTypesImplementingOpenGenericType(typeof(IServerHandler<>)))
                 {
                     PropertyInfo prop = type.GetProperty(
-                        "Instance", 
+                        "Instance",
                         BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy);
                     object instance = prop.GetValue(null, null);
                     var inst = (IServerHandler)instance;
                     inst.Subscriber(this.bus);
 #if DEBUG
-                    Console.WriteLine(instance.GetType().FullName);
+                    Console.WriteLine("Server subscribed '" + instance.GetType().FullName + "'");
 #endif
                 }
             }
+            else
+            {
+                this.Subscribe();
+            }
+        }
+
+        /// <summary>
+        /// The subscribe.
+        /// </summary>
+        public virtual void Subscribe()
+        {
+            // Fill this method in derived class to subscribe handlers manually
         }
 
         #endregion

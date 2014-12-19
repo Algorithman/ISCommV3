@@ -71,7 +71,7 @@ namespace ISCommTests
         public void Test1()
         {
             var server = new ISCommServer();
-            var client = new ISCommClient(-1, -1, false);
+            var client = new ISCommClient(-1, -1, true);
 
             server.Start("localhost", 4545);
 

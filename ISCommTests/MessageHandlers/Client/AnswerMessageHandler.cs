@@ -50,8 +50,10 @@ namespace ISCommTests.MessageHandlers.Client
         /// </param>
         public void Execute(AnswerMessage message)
         {
+#if DEBUG
             Console.WriteLine("Answermessage received");
             Console.WriteLine("Echo Data: " + message.Echo);
+#endif
         }
 
         /// <summary>

@@ -306,11 +306,24 @@ namespace ISCommV3
                     object instance = prop.GetValue(null, null);
                     var inst = (IClientHandler)instance;
                     inst.Subscriber(this.bus);
-                    Console.WriteLine(instance.GetType().FullName + " subscribed");
+#if DEBUG
+                    Console.WriteLine("Client subscribed '" + instance.GetType().FullName + "'.");
+#endif
                 }
+            }
+            else
+            {
+                this.Subscribe();
             }
         }
 
+        /// <summary>
+        /// The subscribe.
+        /// </summary>
+        public virtual void Subscribe()
+        {
+            // Fill this method in derived class to subscribe handlers manually
+        }
         #endregion
     }
 }
